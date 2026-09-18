@@ -15,6 +15,13 @@ const App = () => {
   const addPerson = (event) => {
     event.preventDefault()
 
+    const nameExists = persons.some(person => person.name)
+
+    if (nameExists) {
+      alert(`${newName} has already been added`)
+      return
+    }
+
     const personObject = {
       name: newName
     }
