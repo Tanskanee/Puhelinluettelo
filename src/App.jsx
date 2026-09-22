@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
@@ -11,48 +11,56 @@ const App = () => {
   const [filter, setFilter] = useState("")
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => setPersons(response.data))
+    personService
+      .getAll()
+      .then(response => {
+        setPersons(response.data)
+      })
+      .catch(virhe => console.error('Haku epäonnistui', virhe))
   }, [])
 
   const addPerson = (event) => {
     event.preventDefault()
 
-    const nameExists = persons.some(person => person.name === newName)
+    if (!newName.trim() || !newNumber.trim()) {
+      alert('Both name and number must be provided!')
+      return
+    }
+
+    const nameExists = persons.some(person => person.name.toLowerCase() === newName.toLowerCase())
 
     if (nameExists) {
       alert(`${newName} has already been added`)
       return
     }
 
+    const maxId = persons.length > 0 
+      ? Math.max(...persons.map(p => Number(p.id) || 0)) 
+      : 0
+
     const personObject = {
+      id: String(maxId + 1),
       name: newName,
       number: newNumber
     }
 
-    axios
-      .post('http://localhost:3001/persons', personObject)
+    personService
+      .create(personObject)
       .then(response => {
         setPersons(persons.concat(response.data))
         setNewName("")
         setNewNumber("")
       })
+      .catch(virhe => console.error('Lisäys epäonnistui', virhe))
   }
   
-  const nameChange = (event) => {
-    setNewName(event.target.value)
-  }
-  
-  const numberChange = (event) => {
-    setNewNumber(event.target.value)
-  }
+  const nameChange = (event) => setNewName(event.target.value)
+  const numberChange = (event) => setNewNumber(event.target.value)
+  const filterChange = (event) => setFilter(event.target.value)
 
-  const filterChange = (event) => {
-    setFilter(event.target.value)
-  }
-
-  const personsToShow = persons.filter(person => person.name.includes(filter))
+  const personsToShow = persons.filter(person => 
+    person.name.toLowerCase().includes(filter.toLowerCase())
+  )
 
   return (
     <div>
@@ -72,7 +80,6 @@ const App = () => {
       <Persons personsToShow={personsToShow}/>
     </div>
   )
-
 }
 
 export default App
