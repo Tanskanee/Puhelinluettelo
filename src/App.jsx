@@ -53,6 +53,21 @@ const App = () => {
       })
       .catch(virhe => console.error('Lisäys epäonnistui', virhe))
   }
+
+  const deletePerson = (id, name) => {
+    if (window.confirm(`Delete ${name}?`)) {
+      personService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+        })
+        .catch(virhe => {
+          console.error('Poisto epäonnistui', virhe)
+          alert(`The person '${name}' was already deleted from server`)
+          setPersons(persons.filter(person => person.id !== id))
+        })
+    }
+  }
   
   const nameChange = (event) => setNewName(event.target.value)
   const numberChange = (event) => setNewNumber(event.target.value)
@@ -65,9 +80,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <form>
-        <Filter value={filter} onChange={filterChange}/>
-      </form>
+      <Filter value={filter} onChange={filterChange}/>
+      
       <h2>Add a number</h2>
       <PersonForm
         newName={newName}
@@ -76,8 +90,9 @@ const App = () => {
         onNumberChange={numberChange}
         onSubmit={addPerson}
       />
+      
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow}/>
+      <Persons personsToShow={personsToShow} deletePerson={deletePerson} />
     </div>
   )
 }
