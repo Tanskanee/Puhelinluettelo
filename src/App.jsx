@@ -27,24 +27,33 @@ const App = () => {
       return
     }
 
-    const nameExists = persons.some(person => person.name.toLowerCase() === newName.toLowerCase())
+    const existingPerson = persons.find(person => person.name.toLowerCase() === newName.toLowerCase())
 
-    if (nameExists) {
-      alert(`${newName} has already been added`)
+    if (existingPerson) {
+      const updateNumber = window.confirm(`${newName} has already been added, replace old number with a new one?`)
+      
+      if (updateNumber) {
+        const updatedPerson = { ...existingPerson, number: newNumber}
+
+          personService
+          .update(existingPerson.id, updatedPerson)
+          .then(response => {
+            setPersons(persons.map(p => p.name.toLowerCase() !== newName.toLowerCase() ? p : response.data))
+            setNewName("")
+            setNewNumber("")
+          })
+          .catch(virhe => console.error('Päivitys epäonnistui', virhe))
+      }
       return
     }
 
-    const maxId = persons.length > 0 
-      ? Math.max(...persons.map(p => Number(p.id) || 0)) 
-      : 0
-
     const personObject = {
-      id: String(maxId + 1),
       name: newName,
       number: newNumber
     }
 
     personService
+      .update(String(existingPerson.id), updatedPerson)
       .create(personObject)
       .then(response => {
         setPersons(persons.concat(response.data))
