@@ -1,14 +1,18 @@
+import './index.css'
 import { useEffect, useState } from 'react'
 import personService from './services/persons'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState("")
   const [newNumber, setNewNumber] = useState("")
   const [filter, setFilter] = useState("")
+  const [notifMessage, setNotifMessage] = useState(null)
+  const [notifType, setNotifType] = useState('success')
 
   useEffect(() => {
     personService
@@ -16,14 +20,23 @@ const App = () => {
       .then(response => {
         setPersons(response.data)
       })
-      .catch(virhe => console.error('Haku epäonnistui', virhe))
+      .catch(virhe => {
+        console.error('Haku epäonnistui', virhe)
+        setNotifType('error')
+        setNotifMessage('Failed to fetch numbers from server')
+        setTimeout(() => setNotifMessage(null), 5000)
+      })
   }, [])
 
   const addPerson = (event) => {
     event.preventDefault()
 
     if (!newName.trim() || !newNumber.trim()) {
-      alert('Both name and number must be provided!')
+      setNotifType('error')
+      setNotifMessage(`Both name and number must be provided!`)
+      setTimeout(() => {
+        setNotifMessage(null)
+      }, 5000)
       return
     }
 
@@ -33,16 +46,29 @@ const App = () => {
       const updateNumber = window.confirm(`${newName} has already been added, replace old number with a new one?`)
       
       if (updateNumber) {
-        const updatedPerson = { ...existingPerson, number: newNumber}
+        const updatedPerson = { ...existingPerson, number: newNumber }
 
-          personService
+        personService
           .update(existingPerson.id, updatedPerson)
           .then(response => {
             setPersons(persons.map(p => p.name.toLowerCase() !== newName.toLowerCase() ? p : response.data))
+            setNotifType('success')
+            setNotifMessage(`Updated number for ${newName}`)
             setNewName("")
             setNewNumber("")
+            setTimeout(() => {
+              setNotifMessage(null)
+            }, 5000)
           })
-          .catch(virhe => console.error('Päivitys epäonnistui', virhe))
+          .catch(virhe => {
+            console.error('Päivitys epäonnistui', virhe)
+            setNotifType('error')
+            setNotifMessage(`Information of ${newName} has already been removed from server`)
+            setTimeout(() => {
+              setNotifMessage(null)
+            }, 5000)
+            setPersons(persons.filter(p => p.id !== existingPerson.id))
+          })
       }
       return
     }
@@ -53,14 +79,25 @@ const App = () => {
     }
 
     personService
-      .update(String(existingPerson.id), updatedPerson)
       .create(personObject)
       .then(response => {
         setPersons(persons.concat(response.data))
+        setNotifType('success')
+        setNotifMessage(`Added ${newName}`)
         setNewName("")
         setNewNumber("")
+        setTimeout(() => {
+          setNotifMessage(null)
+        }, 5000)
       })
-      .catch(virhe => console.error('Lisäys epäonnistui', virhe))
+      .catch(virhe => {
+        console.error('Lisäys epäonnistui', virhe)
+        setNotifType('error')
+        setNotifMessage(`An error occurred adding the person`)
+        setTimeout(() => {
+          setNotifMessage(null)
+        }, 5000)
+      })
   }
 
   const deletePerson = (id, name) => {
@@ -69,10 +106,19 @@ const App = () => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id))
+          setNotifType('success')
+          setNotifMessage(`Deleted ${name}`)
+          setTimeout(() => {
+            setNotifMessage(null)
+          }, 5000)
         })
         .catch(virhe => {
           console.error('Poisto epäonnistui', virhe)
-          alert(`The person '${name}' was already deleted from server`)
+          setNotifType('error')
+          setNotifMessage(`The person '${name}' was already deleted from server`)
+          setTimeout(() => {
+            setNotifMessage(null)
+          }, 5000)
           setPersons(persons.filter(person => person.id !== id))
         })
     }
@@ -89,6 +135,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notifMessage} type={notifType}/>
       <Filter value={filter} onChange={filterChange}/>
       
       <h2>Add a number</h2>
