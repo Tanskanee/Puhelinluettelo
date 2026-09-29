@@ -63,7 +63,7 @@ const App = () => {
           .catch(virhe => {
             console.error('Päivitys epäonnistui', virhe)
             setNotifType('error')
-            setNotifMessage(`Information of ${newName} has already been removed from server`)
+            setNotifMessage(`${newName} does not exist on the server`)
             setTimeout(() => {
               setNotifMessage(null)
             }, 5000)
@@ -115,7 +115,7 @@ const App = () => {
         .catch(virhe => {
           console.error('Poisto epäonnistui', virhe)
           setNotifType('error')
-          setNotifMessage(`The person '${name}' was already deleted from server`)
+          setNotifMessage(`'${name}' was already deleted from server`)
           setTimeout(() => {
             setNotifMessage(null)
           }, 5000)
